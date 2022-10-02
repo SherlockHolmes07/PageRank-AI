@@ -61,13 +61,16 @@ def transition_model(corpus, page, damping_factor):
     link_exists = len(corpus[page])
 
     if link_exists:
+        #Choosing from all the pages of corpus
         for each_page in corpus:
             cont[each_page] = (1-damping_factor) / len(corpus)
 
+         #Choosing from links on the page
         for link in corpus[page]:
             cont[link] += damping_factor / len(corpus[page])
 
     else:
+        #If no links exists on the page
         for page in corpus:
             cont[page] = 1 / len(corpus)
     
@@ -85,27 +88,27 @@ def sample_pagerank(corpus, damping_factor, n):
     """
 
     cont = dict()
-
+    #initializing with Zero
     for key in corpus:
         cont[key] = 0
 
+    #Picking up a page randomly and incrimenting it's rank
     page = random.choice(list(corpus.keys()))
     cont[page] += 1
     
+    #Taking N samples
     for i in range(n):
+        #Getting transition model for random page
         sample = transition_model(corpus,page,damping_factor)
+        #Selecting a page from sample as per their probablity
         page = random.choices(list(sample.keys()), weights=sample.values(), k=1)[0]
-        cont[page] += 1
+        cont[page] += 1 #incrimenting its count
 
+    #Getting the probablity by diving with n
     for key in cont:
         cont[key] = cont[key] / n
 
-    
-    if round(sum(cont.values())) != 1:
-        print("Not rounding up to 1.")
-
     return cont
-
 
 
 def iterate_pagerank(corpus, damping_factor):
@@ -117,7 +120,42 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    ans = {}
+    N = len(corpus)
+    d = damping_factor
+    #initializing with PR 1 / N
+    for key in corpus:
+        ans[key] = 1 / N
+
+    while True:
+
+        count = 0
+        #For each key or Page in corpus
+        for key in corpus:
+
+            new = (1 - d) / N
+            sum = 0
+
+            #Traversing all the corpus and checking if the page has the link to the key and if it has then applying the formula
+            for page in corpus:
+                if key in corpus[page]:
+                    sum += ans[page] / len(corpus[page])
+
+                #As per question "A page that has no links at all should be interpreted as having one link for every page in the corpus"
+                elif len(corpus[page]) == 0:
+                    sum += ans[page] / len(corpus)
+
+            sum = d * sum
+            new += sum
+            #Checking the terminating condition as per Que
+            if abs(ans[key] - new) < 0.001:
+                count += 1
+
+            ans[key] = new 
+        
+        if count == N:
+              return ans
+  
 
 
 if __name__ == "__main__":
